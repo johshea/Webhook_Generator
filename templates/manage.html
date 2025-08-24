@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+{% set page = 'manage' %}
+{% block title %}Manage | Webhook Manager{% endblock %}
+{% block content %}
+<div class="container-fluid">
+  <h3 class="mb-4">Management</h3>
+  <div class="row g-4">
+    <!-- Webhook Targets -->
+    <div class="col-12 col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title">Webhook Targets</h5>
+          <form method="post" class="row g-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="add_target">
+            <div class="col-12">
+              <label class="form-label">Name</label>
+              <input class="form-control" name="target_name" placeholder="e.g., PagerDuty Prod" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label">URL</label>
+              <input class="form-control" name="target_url" placeholder="https://example.com/webhook" required>
+            </div>
+            <div class="col-12">
+              <button class="btn btn-primary w-100">Add Target</button>
+            </div>
+          </form>
+          <hr>
+          <form method="post" class="mt-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="delete_target">
+            <div class="input-group">
+              <select name="target_id" class="form-select" required>
+                <option value="" selected disabled>Select target to delete</option>
+                {% for t in targets %}
+                  <option value="{{ t.id }}">{{ t.name }} — {{ t.url }}</option>
+                {% endfor %}
+              </select>
+              <button class="btn btn-outline-danger">Delete</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Functions -->
+    <div class="col-12 col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title">Functions (JSON Templates)</h5>
+          <!-- Add Function -->
+          <form method="post" class="row g-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="add_function">
+            <div class="col-12">
+              <label class="form-label">Name</label>
+              <input class="form-control" name="func_name" placeholder="e.g., create_ticket" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Description (optional)</label>
+              <input class="form-control" name="func_desc" placeholder="What this function does">
+            </div>
+            <div class="col-12">
+              <label class="form-label">JSON Template</label>
+              <textarea class="form-control" name="func_template" id="func_add_template" rows="6" placeholder='{"key": "value"}' required></textarea>
+              <div id="func_add_status" class="form-text"></div>
+              <div class="form-text">Used to pre-fill the payload on the Send page.</div>
+            </div>
+            <div class="col-12">
+              <button id="func_add_submit" class="btn btn-primary w-100">Add Function</button>
+            </div>
+          </form>
+          <hr>
+          <!-- Delete Function -->
+          <form method="post" class="mt-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="delete_function">
+            <div class="input-group">
+              <select name="func_id" class="form-select" required>
+                <option value="" selected disabled>Select function to delete</option>
+                {% for f in functions %}
+                  <option value="{{ f.id }}">{{ f.name }}{% if f.description %} — {{ f.description }}{% endif %}</option>
+                {% endfor %}
+              </select>
+              <button class="btn btn-outline-danger">Delete</button>
+            </div>
+          </form>
+
+          <!-- Edit Function -->
+          <hr>
+          <h6 class="mt-2">Edit Function</h6>
+          <form method="post" action="{{ url_for('update_function') }}" class="row g-2" id="edit-function-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="col-12">
+              <label class="form-label">Select Function to Edit</label>
+              <select name="func_id" id="func_edit_id" class="form-select" required>
+                <option value="" selected disabled>Choose...</option>
+                {% for f in functions %}
+                  <option value="{{ f.id }}"
+                          data-name="{{ f.name }}"
+                          data-desc="{{ f.description or '' }}"
+                          data-template='{{ f.json_template | tojson }}'>
+                    {{ f.name }}{% if f.description %} — {{ f.description }}{% endif %}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Name</label>
+              <input class="form-control" name="func_name" id="func_edit_name" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Description (optional)</label>
+              <input class="form-control" name="func_desc" id="func_edit_desc">
+            </div>
+            <div class="col-12">
+              <label class="form-label">JSON Template</label>
+              <textarea class="form-control" name="func_template" id="func_edit_template" rows="6" required></textarea>
+              <div id="func_edit_status" class="form-text"></div>
+            </div>
+            <div class="col-12">
+              <button id="func_edit_submit" class="btn btn-secondary w-100">Save Changes</button>
+            </div>
+          </form>
+
+          <!-- Duplicate Function -->
+          <hr>
+          <h6 class="mt-2">Duplicate Function</h6>
+          <form method="post" action="{{ url_for('duplicate_function') }}" class="row g-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="col-12">
+              <label class="form-label">Function to Duplicate</label>
+              <select name="func_id" class="form-select" required>
+                <option value="" selected disabled>Choose...</option>
+                {% for f in functions %}
+                  <option value="{{ f.id }}">{{ f.name }}{% if f.description %} — {{ f.description }}{% endif %}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">New Name (optional)</label>
+              <input class="form-control" name="new_name" placeholder="Leave blank to auto-generate">
+            </div>
+            <div class="col-12">
+              <button class="btn btn-outline-primary w-100">Duplicate</button>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Users -->
+    <div class="col-12 col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title">Users & Access</h5>
+          <form method="post" class="row g-2 mb-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="add_user">
+            <div class="col-12">
+              <label class="form-label">Username</label>
+              <input class="form-control" name="new_username" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Password</label>
+              <input type="password" class="form-control" name="new_password" required>
+            </div>
+            <div class="col-12 form-check">
+              <input class="form-check-input" type="checkbox" name="new_is_admin" id="new_is_admin">
+              <label for="new_is_admin" class="form-check-label">Admin (can access Management)</label>
+            </div>
+            <div class="col-12">
+              <button class="btn btn-primary w-100">Add User</button>
+            </div>
+          </form>
+          <form method="post" class="row g-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="delete_user">
+            <div class="col-8">
+              <select name="user_id" class="form-select" required>
+                <option value="" selected disabled>Select user to delete</option>
+                {% for u in users %}
+                  <option value="{{ u.id }}">{{ u.username }}{% if u.is_admin %} — admin{% endif %}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-4 d-grid">
+              <button class="btn btn-outline-danger">Delete</button>
+            </div>
+          </form>
+          <form method="post" class="row g-2 mt-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="toggle_admin">
+            <div class="col-8">
+              <select name="user_id" class="form-select" required>
+                <option value="" selected disabled>Select user to toggle admin</option>
+                {% for u in users %}
+                  <option value="{{ u.id }}">{{ u.username }}{% if u.is_admin %} — admin{% endif %}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-4 d-grid">
+              <button class="btn btn-outline-secondary">Toggle Admin</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audit Logs -->
+  <div class="row g-4 mt-2">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Recent Audit Logs</h5>
+          <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle mb-0">
+              <thead>
+                <tr>
+                  <th scope="col">Time (UTC)</th>
+                  <th scope="col">User</th>
+                  <th scope="col">Action</th>
+                  <th scope="col">Details</th>
+                  <th scope="col">IP</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for log in logs %}
+                <tr>
+                  <td><code>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</code></td>
+                  <td>{{ log.username or '—' }}</td>
+                  <td><span class="badge text-bg-secondary">{{ log.action }}</span></td>
+                  <td style="max-width: 600px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    {{ log.details }}
+                  </td>
+                  <td>{{ log.ip or '—' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-muted">No logs yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Populate edit form fields when a function is selected
+document.addEventListener("DOMContentLoaded", function () {
+  const sel = document.getElementById("func_edit_id");
+  const nameI = document.getElementById("func_edit_name");
+  const descI = document.getElementById("func_edit_desc");
+  const tmplI = document.getElementById("func_edit_template");
+
+  if (sel) {
+    sel.addEventListener("change", function () {
+      const opt = this.selectedOptions[0];
+      if (!opt) return;
+      nameI.value = opt.dataset.name || "";
+      descI.value = opt.dataset.desc || "";
+      try {
+        const raw = JSON.parse(opt.dataset.template || "\"{}\"");
+        try {
+          const parsed = JSON.parse(raw);
+          tmplI.value = JSON.stringify(parsed, null, 2);
+        } catch {
+          tmplI.value = raw;
+        }
+      } catch {
+        tmplI.value = "{}";
+      }
+      tmplI.dispatchEvent(new Event("input"));
+    });
+  }
+});
+
+// JSON syntax checker for Add + Edit forms
+(function () {
+  function isValidJSON(str) { try { JSON.parse(str); return true; } catch (e) { return false; } }
+  function wireChecker(textareaId, statusId, submitId) {
+    const ta = document.getElementById(textareaId);
+    const status = document.getElementById(statusId);
+    const submit = document.getElementById(submitId);
+    if (!ta || !status || !submit) return;
+    function update() {
+      const val = ta.value.trim();
+      if (!val) {
+        status.textContent = "Enter JSON...";
+        status.className = "form-text text-muted";
+        submit.disabled = true;
+        return;
+      }
+      if (isValidJSON(val)) {
+        status.textContent = "Valid JSON ✔";
+        status.className = "form-text text-success";
+        submit.disabled = false;
+      } else {
+        status.textContent = "Invalid JSON ✖";
+        status.className = "form-text text-danger";
+        submit.disabled = true;
+      }
+    }
+    ta.addEventListener("blur", function () {
+      if (isValidJSON(ta.value)) ta.value = JSON.stringify(JSON.parse(ta.value), null, 2);
+    });
+    ta.addEventListener("input", update);
+    update();
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    wireChecker("func_add_template", "func_add_status", "func_add_submit");
+    wireChecker("func_edit_template", "func_edit_status", "func_edit_submit");
+  });
+})();
+</script>
+{% endblock %}

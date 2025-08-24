@@ -1,0 +1,6 @@
+#layout { min-height: 100vh; }
+#sidebar { width: 240px; }
+#content { flex: 1; }
+.nav-link { border-radius: 0.25rem; }
+.nav-link:hover { background: rgba(255,255,255,0.1); }
+pre { background: #f8f9fa; padding: 0.5rem; border-radius: 0.5rem; }

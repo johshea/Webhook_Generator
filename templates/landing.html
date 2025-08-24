@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% set page = 'landing' %}
+{% block title %}Home | Webhook Manager{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h4 class="card-title mb-3">Welcome to the Webhook Manager</h4>
+          {% if authed %}
+            <p class="text-muted">You're signed in as <strong>{{ current_user.username }}</strong>.</p>
+            <a href="{{ url_for('send_webhook') }}" class="btn btn-primary">Enter</a>
+          {% else %}
+            <form method="post" class="mt-2">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <div class="mb-3">
+                <label class="form-label">Username</label>
+                <input type="text" name="username" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Password</label>
+                <input type="password" name="password" class="form-control" required>
+              </div>
+              <button type="submit" class="btn btn-primary w-100">Sign In</button>
+              <p class="form-text mt-2">Default admin: <code>admin / admin</code> (change after first login).</p>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
