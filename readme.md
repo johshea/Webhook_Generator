@@ -24,7 +24,7 @@ source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### Initialize the database
+### Initialize the database (optional done at runtime with defaults)
 ```bash
 flask --app app.py init-db
 # Creates SQLite DB and a default admin user: admin / admin
@@ -40,7 +40,7 @@ python app.py
 
 ---
 
-## 2) Configuration
+## 2) Configuration (optional, done at runtime wiht defaults)
 
 Set via environment variables before running the app:
 
