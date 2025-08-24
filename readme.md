@@ -101,6 +101,7 @@ SQLite DB file defaults to `webhooks.db` in the project root.
 - If idle for >15 minutes, you’ll be logged out automatically.
 
 ### B) Manage (Admin Only)
+<img width="983" height="619" alt="Screenshot 2025-08-24 at 11 57 42 AM" src="https://github.com/user-attachments/assets/57a653d7-c678-4df5-b41d-b0f0a0a8224b" />
 
 Organized into four areas:
 
@@ -136,6 +137,7 @@ Organized into four areas:
 - **Export CSV**: Download the complete history via `/logs/export.csv`.
 
 ### C) Send Webhooks
+<img width="983" height="619" alt="Screenshot 2025-08-24 at 11 56 09 AM" src="https://github.com/user-attachments/assets/31f03509-7319-4bf9-b814-601e20bdf64c" />
 
 1. **Target** — choose a saved endpoint.
 2. **Function** (optional) — pre-fills the **JSON Payload** and (if present) enables **schema validation**.
