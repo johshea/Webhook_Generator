@@ -19,7 +19,11 @@
         ] %}
         <ul class="nav flex-column">
           {% for endpoint, label in nav %}
-            {% if endpoint != page and (endpoint != 'manage' or (current_user.is_authenticated and current_user.is_admin)) %}
+            {% if endpoint != page and (
+                 endpoint != 'manage' or (current_user.is_authenticated and current_user.is_admin_effective)
+               ) and (
+                 endpoint != 'send_webhook' or (current_user.is_authenticated and current_user.can_send)
+               ) %}
               <li class="nav-item">
                 <a class="nav-link text-white" href="{{ url_for(endpoint) }}">{{ label }}</a>
               </li>
@@ -49,5 +53,23 @@
       </main>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% if current_user.is_authenticated %}
+    <script>
+    (function () {
+      var IDLE_MS = 15 * 60 * 1000;
+      var timer;
+      function reset() {
+        clearTimeout(timer);
+        timer = setTimeout(function () {
+          window.location.href = "{{ url_for('logout') }}";
+        }, IDLE_MS);
+      }
+      ['click','mousemove','keydown','scroll','touchstart'].forEach(function (ev) {
+        document.addEventListener(ev, reset, true);
+      });
+      reset();
+    })();
+    </script>
+    {% endif %}
   </body>
 </html>

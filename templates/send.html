@@ -6,6 +6,7 @@
   <h3 class="mb-3">Webhook Generator</h3>
   <form method="post" id="send-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="function_id" id="hidden_function_id">
     <div class="row g-3">
       <div class="col-12 col-lg-4">
         <label class="form-label">Target</label>
@@ -24,7 +25,17 @@
             <option value="{{ f.id }}">{{ f.name }}{% if f.description %} — {{ f.description }}{% endif %}</option>
           {% endfor %}
         </select>
-        <div class="form-text">Selecting a function will pre-fill the payload.</div>
+        <div class="form-text">Selecting a function will pre-fill the payload. If the function has a JSON Schema, the payload will be validated server-side before sending.</div>
+      </div>
+      <div class="col-12 col-lg-4">
+        <label class="form-label">Header Set (optional)</label>
+        <select class="form-select" name="headerset_id">
+          <option value="">(none)</option>
+          {% for h in headersets %}
+            <option value="{{ h.id }}">{{ h.name }}{% if h.description %} — {{ h.description }}{% endif %}</option>
+          {% endfor %}
+        </select>
+        <div class="form-text">Header values are managed by admins and are not shown here.</div>
       </div>
       <div class="col-12">
         <label class="form-label">JSON Payload</label>
@@ -71,9 +82,11 @@
 document.addEventListener("DOMContentLoaded", function () {
   const funcSelect = document.getElementById("function_id");
   const payloadBox = document.getElementById("payload");
+  const hiddenFunc = document.getElementById("hidden_function_id");
 
   funcSelect.addEventListener("change", async function () {
     const fid = this.value;
+    hiddenFunc.value = fid || "";
     if (!fid) return;
     try {
       const resp = await fetch(`{{ url_for('send_webhook') }}?function_id=${fid}`, {
@@ -81,7 +94,8 @@ document.addEventListener("DOMContentLoaded", function () {
       });
       const data = await resp.json();
       if (data.template) {
-        payloadBox.value = JSON.stringify(JSON.parse(data.template), null, 2);
+        try { payloadBox.value = JSON.stringify(JSON.parse(data.template), null, 2); }
+        catch { payloadBox.value = data.template; }
       }
     } catch (e) {
       console.error(e);

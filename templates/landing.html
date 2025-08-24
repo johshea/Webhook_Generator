@@ -9,8 +9,12 @@
         <div class="card-body">
           <h4 class="card-title mb-3">Welcome to the Webhook Manager</h4>
           {% if authed %}
-            <p class="text-muted">You're signed in as <strong>{{ current_user.username }}</strong>.</p>
+            <p class="text-muted">You're signed in as <strong>{{ current_user.username }}</strong> (role: <code>{{ current_user.role }}</code>).</p>
+            {% if current_user.can_send %}
             <a href="{{ url_for('send_webhook') }}" class="btn btn-primary">Enter</a>
+            {% else %}
+            <div class="alert alert-warning">Your role (<code>{{ current_user.role }}</code>) does not allow sending webhooks.</div>
+            {% endif %}
           {% else %}
             <form method="post" class="mt-2">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
