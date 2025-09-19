@@ -26,13 +26,13 @@ pip install -r requirements.txt
 
 ### Initialize the database (optional done at runtime with defaults)
 ```bash
-flask --app app.py init-db
+flask --app main.py init-db
 # Creates SQLite DB and a default admin user: admin / admin
 ```
 
 ### Run the app
 ```bash
-python app.py
+python main.py
 # open http://127.0.0.1:5000
 ```
 
@@ -88,7 +88,7 @@ SQLite DB file defaults to `webhooks.db` in the project root.
 | `/manage/function/update` | POST | Edit existing Function (name/desc/template/schema) |
 | `/manage/function/duplicate` | POST | Duplicate an existing Function |
 | `/logs/export.csv` | GET | Export all audit logs as CSV (admin only) |
-| `flask --app app.py init-db` | CLI | Initialize DB + default admin |
+| `flask --app main.py init-db` | CLI | Initialize DB + default admin |
 
 ---
 
